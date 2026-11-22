@@ -1,0 +1,15 @@
+apt
+aptitude
+snapd
+squashfs-tools
+xterm
+network-manager
+network-manager-gnome
+wpasupplicant
+iw
+rfkill
+firmware-realtek
+firmware-iwlwifi
+firmware-atheros
+firmware-brcm80211
+mesa-utils

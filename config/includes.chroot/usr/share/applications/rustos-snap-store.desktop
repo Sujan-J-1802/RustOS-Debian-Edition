@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RustOS App Store
+GenericName=Snap Store
+Comment=Launch the RustOS graphical application store
+Exec=xterm -geometry 100x30 -hold -e /usr/local/bin/rustos-snap-store
+Icon=system-software-install
+Terminal=false
+Categories=System;PackageManager;
+StartupNotify=false

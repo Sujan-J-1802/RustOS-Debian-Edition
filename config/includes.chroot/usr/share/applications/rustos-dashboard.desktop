@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RustOS System Dashboard
+Comment=View RustOS system information and boot performance
+Exec=xterm -geometry 110x35 -hold -e /usr/local/bin/rustos-dashboard
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;
+StartupNotify=false

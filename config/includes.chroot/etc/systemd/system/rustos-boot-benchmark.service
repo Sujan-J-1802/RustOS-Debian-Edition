@@ -1,0 +1,7 @@
+[Unit]
+Description=RustOS Boot Time Benchmark Recorder
+After=graphical.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/rustos-record-boot

@@ -1,0 +1,9 @@
+[Unit]
+Description=Schedule RustOS Offline Snap Store Provisioning
+
+[Timer]
+OnBootSec=90s
+Unit=rustos-snap-provision.service
+
+[Install]
+WantedBy=timers.target

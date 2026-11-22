@@ -1,0 +1,11 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RustOS Hardware Center
+Comment=View CPU, memory, PCI, USB, storage and network hardware
+Exec=xterm -geometry 110x35 -hold -e /usr/local/bin/rustos-hardware
+Icon=computer
+Terminal=false
+Categories=System;
+StartupNotify=false

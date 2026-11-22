@@ -1,0 +1,44 @@
+#!/bin/sh
+
+echo "======================================"
+echo "       RustOS Snap Diagnostic"
+echo "======================================"
+
+echo
+echo "===== SNAP EXECUTABLE ====="
+command -v snap || true
+
+echo
+echo "===== SNAP VERSION ====="
+snap version 2>&1 || true
+
+echo
+echo "===== SNAPD SOCKET ====="
+systemctl is-active snapd.socket 2>&1 || true
+
+echo
+echo "===== SNAPD SERVICE ====="
+systemctl is-active snapd.service 2>&1 || true
+
+echo
+echo "===== SNAP SEED STATUS ====="
+timeout 15 snap wait system seed.loaded 2>&1 || true
+
+echo
+echo "===== INSTALLED SNAPS ====="
+snap list 2>&1 || true
+
+echo
+echo "===== SNAP STORE EXECUTABLE ====="
+if [ -x /snap/bin/snap-store ]; then
+    echo "Snap Store executable found."
+else
+    echo "Snap Store executable missing."
+fi
+
+echo
+echo "===== LIVE FILESYSTEM ====="
+df -h /
+
+echo
+echo "===== DIAGNOSTIC COMPLETE ====="

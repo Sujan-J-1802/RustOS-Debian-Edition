@@ -1,0 +1,51 @@
+#!/bin/bash
+set -euo pipefail
+
+SNAP_DIR="${1:-/opt/rustos/snap-packages}"
+
+echo "===== RUSTOS OFFLINE SNAP PREFLIGHT ====="
+
+packages=(
+  bare
+  core24
+  gtk-common-themes
+  gnome-46-2404
+  mesa-2404
+  snap-store
+)
+
+if [ ! -d "$SNAP_DIR" ]; then
+    echo "ERROR: Package directory missing: $SNAP_DIR"
+    exit 1
+fi
+
+echo
+echo "===== VERIFYING PACKAGES ====="
+
+for name in "${packages[@]}"; do
+    snap_files=("$SNAP_DIR/${name}_"*.snap)
+    assert_files=("$SNAP_DIR/${name}_"*.assert)
+
+    if [ ! -f "${snap_files[0]}" ] ||
+       [ ! -f "${assert_files[0]}" ]; then
+        echo "ERROR: Missing package or assertion: $name"
+        exit 1
+    fi
+
+    echo "PASS: $name"
+done
+
+echo
+echo "===== SNAP EXECUTABLE ====="
+command -v snap || true
+
+echo
+echo "===== STORAGE ====="
+df -h /
+
+echo
+echo "===== MEMORY ====="
+free -h
+
+echo
+echo "===== PREFLIGHT COMPLETE ====="

@@ -1,0 +1,50 @@
+#!/bin/sh
+
+set -eu
+
+echo "======================================"
+echo "       RustOS Debian Edition"
+echo "            Snap Store"
+echo "======================================"
+
+if ! command -v snap >/dev/null 2>&1; then
+    echo "ERROR: Snap package manager is missing."
+    exit 1
+fi
+
+echo
+echo "Starting Snap services..."
+
+sudo systemctl start snapd.socket
+sudo systemctl start snapd.service
+
+echo
+echo "Waiting for Snap initialization..."
+
+if ! timeout 180 snap wait system seed.loaded; then
+    echo "ERROR: Snap initialization timed out."
+    exit 1
+fi
+
+echo
+echo "Checking Snap Store..."
+
+if ! snap list snap-store >/dev/null 2>&1; then
+    echo
+    echo "Snap Store is not installed."
+    echo "RustOS offline provisioning is not configured yet."
+    echo
+    echo "To install manually:"
+    echo "  sudo snap install snap-store"
+    exit 1
+fi
+
+echo
+echo "Launching Snap Store..."
+
+if [ -x /snap/bin/snap-store ]; then
+    exec /snap/bin/snap-store
+fi
+
+echo "ERROR: Snap Store executable not found."
+exit 1

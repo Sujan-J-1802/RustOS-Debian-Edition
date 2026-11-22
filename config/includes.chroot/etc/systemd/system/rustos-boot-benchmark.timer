@@ -1,0 +1,9 @@
+[Unit]
+Description=Schedule RustOS Boot Benchmark
+
+[Timer]
+OnBootSec=45s
+Unit=rustos-boot-benchmark.service
+
+[Install]
+WantedBy=timers.target

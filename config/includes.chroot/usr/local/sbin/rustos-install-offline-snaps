@@ -1,0 +1,171 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SNAP_DIR="${1:-/opt/rustos/snap-packages}"
+
+echo "======================================"
+echo " RustOS Offline Snap Store Installer"
+echo "======================================"
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "ERROR: Run this script as root."
+    exit 1
+fi
+
+if [ ! -d "$SNAP_DIR" ]; then
+    echo "ERROR: Snap package directory missing:"
+    echo "$SNAP_DIR"
+    exit 1
+fi
+
+echo
+echo "===== PERSISTENCE SAFETY CHECK ====="
+
+if ! grep -qw persistence /proc/cmdline; then
+    echo "ERROR: Persistence boot parameter missing."
+    exit 1
+fi
+
+if [ ! -d /run/live/persistence ]; then
+    echo "ERROR: Persistent storage is not mounted."
+    exit 1
+fi
+
+if [ "$(findmnt -n -o FSTYPE /)" != "overlay" ]; then
+    echo "ERROR: Root filesystem is not an overlay."
+    exit 1
+fi
+
+echo "===== PERSISTENT STORAGE MOUNT ====="
+
+if ! findmnt -rn -o TARGET |
+    grep -Eq '^/run/live/persistence/[^/]+$'; then
+    echo "ERROR: No mounted persistence device detected."
+    exit 1
+fi
+
+echo "===== OVERLAY UPPER DIRECTORY ====="
+
+ROOT_OPTIONS=$(findmnt -n -o OPTIONS /)
+
+UPPER_DIR=$(printf '%s\n' "$ROOT_OPTIONS" |
+    tr ',' '\n' |
+    sed -n 's/^upperdir=//p' |
+    head -n 1)
+
+if [ -z "$UPPER_DIR" ]; then
+    echo "ERROR: Root overlay has no writable upper directory."
+    exit 1
+fi
+
+PERSISTENCE_MOUNT=$(findmnt -rn -o TARGET |
+    grep -E '^/run/live/persistence/[^/]+$' |
+    head -n 1)
+
+if [ -z "$PERSISTENCE_MOUNT" ]; then
+    echo "ERROR: Persistence mount not found."
+    exit 1
+fi
+
+case "$UPPER_DIR" in
+    "$PERSISTENCE_MOUNT"/*)
+        echo "PASS: Root overlay uses persistent storage."
+        ;;
+    *)
+        echo "ERROR: Overlay upper directory is not on the persistence mount."
+        exit 1
+        ;;
+esac
+
+echo "Persistence preflight passed."
+
+echo "===== EXISTING INSTALLATION CHECK ====="
+
+if snap list snap-store >/dev/null 2>&1; then
+    echo "Snap Store is already installed."
+    echo "Skipping offline provisioning."
+    exit 0
+fi
+
+echo "===== STORAGE SAFETY CHECK ====="
+
+AVAILABLE_KB=$(df -Pk /var/lib/snapd | awk 'NR==2 {print $4}')
+MINIMUM_KB=$((2 * 1024 * 1024))
+
+if [ "$AVAILABLE_KB" -lt "$MINIMUM_KB" ]; then
+    echo "ERROR: Insufficient writable space for offline Snap installation."
+    echo "Available: $((AVAILABLE_KB / 1024)) MB"
+    echo "Required safety threshold: 2048 MB"
+    exit 1
+fi
+
+echo "Storage preflight passed."
+
+echo
+echo "Starting Snap services..."
+
+systemctl start snapd.socket
+systemctl start snapd.service
+
+echo
+echo "Waiting for Snap initialization..."
+
+timeout 180 snap wait system seed.loaded
+
+echo
+echo "Enabling user daemons..."
+
+snap set system experimental.user-daemons=true
+
+install_snap() {
+    local name="$1"
+    local snap_file
+    local assert_file
+
+    snap_file=$(find "$SNAP_DIR" -maxdepth 1 \
+        -name "${name}_*.snap" -print -quit)
+
+    assert_file=$(find "$SNAP_DIR" -maxdepth 1 \
+        -name "${name}_*.assert" -print -quit)
+
+    if [ -z "$snap_file" ] || [ -z "$assert_file" ]; then
+        echo "ERROR: Missing files for $name"
+        return 1
+    fi
+
+    if snap list "$name" >/dev/null 2>&1; then
+        echo "$name is already installed."
+        return 0
+    fi
+
+    echo
+    echo "Installing $name..."
+
+    snap ack "$assert_file"
+    snap install "$snap_file"
+}
+
+install_snap bare
+install_snap core24
+install_snap gtk-common-themes
+install_snap gnome-46-2404
+install_snap mesa-2404
+install_snap snap-store
+
+echo
+echo "===== INSTALLED SNAP PACKAGES ====="
+snap list
+
+echo
+echo "===== SNAP STORE STATUS ====="
+
+if [ -x /snap/bin/snap-store ]; then
+    echo "SUCCESS: Snap Store executable found."
+else
+    echo "ERROR: Snap Store executable missing."
+    exit 1
+fi
+
+echo
+echo "Offline installation completed."

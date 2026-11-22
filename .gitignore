@@ -1,0 +1,29 @@
+# Generated ISO images
+*.iso
+*.img
+
+# Offline Snap binary assets
+*.snap
+*.assert
+
+# Live-build generated directories
+.cache/
+cache/
+chroot/
+binary/
+binary.tmp/
+build/
+iso-verification/
+
+# Build logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Operating system files
+.DS_Store
+Thumbs.db

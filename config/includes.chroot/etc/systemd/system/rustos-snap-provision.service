@@ -1,0 +1,14 @@
+[Unit]
+Description=RustOS Offline Snap Store Provisioning
+Wants=snapd.socket
+After=local-fs.target snapd.socket
+ConditionPathExists=/opt/rustos/snap-packages/snap-store_1509.snap
+ConditionPathExists=/run/live/persistence
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/rustos-install-offline-snaps
+TimeoutStartSec=1200
+
+[Install]
+WantedBy=multi-user.target

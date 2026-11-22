@@ -1,0 +1,11 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RustOS Boot Analyzer
+Comment=Analyze startup performance and failed systemd services
+Exec=xterm -geometry 110x35 -hold -e /usr/local/bin/rustos-boot-analyzer
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;
+StartupNotify=false
